@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ecommerce_app/screen/login_screen.dart';
 import 'package:ecommerce_app/screen/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // 1. ADD THIS IMPORT
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -19,8 +18,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // 2. Add loading state and auth instance
   bool _isLoading = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance; // 2. ADD THIS
 
   // Sign up function
   Future<void> _signUp() async {
@@ -34,28 +31,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       // 1. This is the Firebase command to CREATE a user
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
-
-      // 4. --- THIS IS THE NEW PART ---
-      // After creating the user, save their info to Firestore
-      if (userCredential.user != null) {
-        // 5. Create a document in a 'users' collection
-        //    We use the user's unique UID as the document ID
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'email': _emailController.text.trim(),
-          'role': 'user', // 6. Set the default role to 'user'
-          'createdAt': FieldValue.serverTimestamp(), // For our records
-        });
-        // Log the created user's UID for debugging
-        debugPrint(
-          'SignUp: created user document for uid=${userCredential.user!.uid}',
-        );
-      }
-
+      await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
       // Wait a moment so the user sees the spinner, then navigate to Home
       await Future.delayed(const Duration(seconds: 1));
       if (mounted) {

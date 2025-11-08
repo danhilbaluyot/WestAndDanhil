@@ -133,15 +133,8 @@
       const s = document.getElementById('web-splash');
       if (s) s.parentNode.removeChild(s);
     });
-    // As a fallback, remove after 1 second in case the event isn't fired.
-    setTimeout(() => { const s = document.getElementById('web-splash'); if (s) s.remove(); }, 1000);
-    // Also remove the older splash wrapper early once DOM is ready so Flutter
-    // canvas has a chance to be visible immediately.
-    window.addEventListener('DOMContentLoaded', function () {
-      const s = document.getElementById('web-splash'); if (s) s.remove();
-      const p = document.getElementById('splash'); if (p) p.remove();
-      document.body.style.background = 'transparent';
-    });
+    // As a fallback, remove after 6 seconds in case the event isn't fired.
+    setTimeout(() => { const s = document.getElementById('web-splash'); if (s) s.remove(); }, 6000);
   </script>
 
   <script src="flutter_bootstrap.js" async=""></script>
