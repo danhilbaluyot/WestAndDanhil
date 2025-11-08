@@ -5,6 +5,8 @@ import 'package:ecommerce_app/screen/auth_wrapper.dart';
 
 // Import the native splash package so we can preserve/remove the native splash
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
+import 'package:provider/provider.dart'; // 2. ADD THIS
 
 void main() async {
   // 1. Preserve the splash screen
@@ -15,7 +17,15 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // 3. Run the app
-  runApp(const MyApp());
+  runApp(
+    // 2. We wrap our app in the provider
+    ChangeNotifierProvider(
+      // 3. This "creates" one instance of our cart
+      create: (context) => CartProvider(),
+      // 4. The child is our normal app
+      child: const MyApp(),
+    ),
+  );
 
   // 4. Remove the splash screen after app is ready
   FlutterNativeSplash.remove();
