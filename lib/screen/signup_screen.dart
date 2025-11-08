@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ecommerce_app/screen/login_screen.dart';
 import 'package:ecommerce_app/screen/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -18,25 +19,42 @@ class _SignUpScreenState extends State<SignUpScreen> {
   // 2. Add loading state and auth instance
   bool _isLoading = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Sign up function
   Future<void> _signUp() async {
+    // 1. Validate the form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
+    // 2. Show loading spinner
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // 1. This is the Firebase command to CREATE a user
-      await _auth.createUserWithEmailAndPassword(
+      // 3. Create the user in Firebase Auth
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Wait a moment so the user sees the spinner, then navigate to Home
-      await Future.delayed(const Duration(seconds: 1));
+
+      // 4. NEW: Save user info to Firestore with default role 'user'
+      if (userCredential.user != null) {
+        await _firestore
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'email': _emailController.text.trim(),
+          'role': 'user',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // 7. Optionally navigate; AuthWrapper can also handle this
+      await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -44,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      // 3. Handle specific sign-up errors
+      // Handle specific sign-up errors
       String message = 'An error occurred';
       if (e.code == 'weak-password') {
         message = 'The password provided is too weak.';
@@ -65,12 +83,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           const SnackBar(content: Text('An unexpected error occurred')),
         );
       }
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
