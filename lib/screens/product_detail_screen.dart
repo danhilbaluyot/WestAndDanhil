@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
 import 'package:provider/provider.dart'; // 2. ADD THIS
 
-// 1. This is a new StatelessWidget
-class ProductDetailScreen extends StatelessWidget {
+// 1. Change StatelessWidget to StatefulWidget
+class ProductDetailScreen extends StatefulWidget {
   // 2. We will pass in the product's data (the map)
   final Map<String, dynamic> productData;
   // 3. We'll also pass the unique product ID (critical for 'Add to Cart' later)
@@ -17,12 +17,38 @@ class ProductDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+// 5. Rename the main class to _ProductDetailScreenState and extend State
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  // 6. ADD OUR NEW STATE VARIABLE FOR QUANTITY
+  int _quantity = 1;
+
+  // 7. ADD THIS FUNCTION
+  void _incrementQuantity() {
+    setState(() {
+      _quantity++;
+    });
+  }
+
+  // 8. ADD THIS FUNCTION
+  void _decrementQuantity() {
+    // We don't want to go below 1
+    if (_quantity > 1) {
+      setState(() {
+        _quantity--;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 1. Extract data from the map for easier use
-    final String name = productData['name'];
-    final String description = productData['description'];
-    final String imageUrl = productData['imageUrl'];
-    final double price = productData['price'];
+    final String name = widget.productData['name'];
+    final String description = widget.productData['description'];
+    final String imageUrl = widget.productData['imageUrl'];
+    final double price = widget.productData['price'];
 
     // 1. ADD THIS LINE: Get the CartProvider
     // We set listen: false because we are not rebuilding, just calling a function
@@ -105,20 +131,53 @@ class ProductDetailScreen extends StatelessWidget {
                       height: 1.5, // Adds line spacing for readability
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
 
-                  // 13. The "Add to Cart" button
+                  // 13. --- ADD THIS NEW SECTION ---
+                  //    (before the "Add to Cart" button)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 14. DECREMENT BUTTON
+                      IconButton.filledTonal(
+                        icon: const Icon(Icons.remove),
+                        onPressed: _decrementQuantity,
+                      ),
+
+                      // 15. QUANTITY DISPLAY
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          '$_quantity', // 16. Display our state variable
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                      // 17. INCREMENT BUTTON
+                      IconButton.filled(
+                        icon: const Icon(Icons.add),
+                        onPressed: _incrementQuantity,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // --- END OF NEW SECTION ---
+
+                  // 18. The "Add to Cart" button
                   ElevatedButton.icon(
                     onPressed: () {
-                      // 4. THIS IS THE NEW LOGIC!
-                      // Call the addItem function from our provider
-                      cart.addItem(productId, name, price);
+                      // 4. THIS IS THE UPDATED LOGIC!
+                      // Call the addItem function from our provider with quantity
+                      cart.addItem(widget.productId, name, price, _quantity);
 
-                      // 5. Show a confirmation pop-up
+                      // 5. Show a confirmation pop-up with quantity
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Added to cart!'),
-                          duration: Duration(seconds: 2),
+                        SnackBar(
+                          content: Text('Added $_quantity x $name to cart!'),
+                          duration: const Duration(seconds: 2),
                         ),
                       );
                     },

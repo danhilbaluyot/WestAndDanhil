@@ -9,6 +9,10 @@ import 'package:ecommerce_app/screens/product_detail_screen.dart'; // 1. ADD THI
 import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
 import 'package:ecommerce_app/screens/cart_screen.dart'; // 2. ADD THIS
 import 'package:provider/provider.dart'; // 3. ADD THIS
+import 'package:ecommerce_app/screens/order_history_screen.dart'; // 1. ADD THIS
+import 'package:ecommerce_app/screens/profile_screen.dart'; // 1. ADD THIS
+import 'package:ecommerce_app/widgets/notification_icon.dart'; // 1. ADD THIS
+import 'package:ecommerce_app/screens/chat_screen.dart'; // ADD THIS FOR CHAT
 
 // Part 2: Widget Definition
 // 3. Change StatelessWidget to StatefulWidget
@@ -28,12 +32,19 @@ class _HomeScreenState extends State<HomeScreen> {
   // 2. Get the current user from Firebase Auth
   final User? _currentUser = FirebaseAuth.instance.currentUser;
 
+  // 3. Get Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   // 3. This function runs ONCE when the screen is first created
   @override
   void initState() {
     super.initState();
     // 4. Call our function to get the role as soon as the screen loads
     _fetchUserRole();
+    // 5. Load the cart from Firestore
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CartProvider>(context, listen: false).loadCartFromFirestore();
+    });
   }
 
   // 5. This is our new function to get data from Firestore
@@ -65,31 +76,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // 10. Move the _signOut function inside this class
-  Future<void> _signOut() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      // Clear navigation and go to LoginScreen
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error signing out: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // 1. Use the _currentUser variable we defined
-        title: Text(
-          _currentUser != null ? 'Welcome, ${_currentUser.email}' : 'Home',
+        // 1. --- THIS IS THE CHANGE ---
+        //    DELETE your old title:
+        /*
+        title: Text(_currentUser != null ? 'Welcome!' : 'Home'),
+        */
+
+        // 2. ADD this new title:
+        title: Image.asset(
+          'assets/images/app_logo.png', // 3. The path to your logo
+          height: 40, // 4. Set a fixed height
         ),
+        // 5. 'centerTitle' is now handled by our global AppBarTheme
         actions: [
           // 1. --- ADD THIS NEW WIDGET ---
           // This is a special, efficient way to use Provider
@@ -118,7 +120,24 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // 2. --- THIS IS THE MAGIC ---
+          // 2. --- ADD THIS NEW BUTTON ---
+          IconButton(
+            icon: const Icon(Icons.receipt_long), // A "receipt" icon
+            tooltip: 'My Orders',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const OrderHistoryScreen(),
+                ),
+              );
+            },
+          ),
+
+          // 3. --- ADD OUR NEW WIDGET ---
+          const NotificationIcon(),
+          // --- END OF NEW WIDGET ---
+
+          // 4. --- THIS IS THE MAGIC ---
           //    This is a "collection-if". The IconButton will only
           //    be built IF _userRole is equal to 'admin'.
           if (_userRole == 'admin')
@@ -126,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.admin_panel_settings),
               tooltip: 'Admin Panel',
               onPressed: () {
-                // 3. This is why we imported admin_panel_screen.dart
+                // 5. This is why we imported admin_panel_screen.dart
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const AdminPanelScreen(),
@@ -135,11 +154,15 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
 
-          // 4. The logout button (always visible)
+          // 6. --- REPLACE THE LOGOUT BUTTON WITH PROFILE BUTTON ---
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: _signOut, // 5. Call our _signOut function
+            icon: const Icon(Icons.person_outline),
+            tooltip: 'Profile',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -220,6 +243,51 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+
+      // --- ADD FLOATING ACTION BUTTON FOR USERS ---
+      floatingActionButton: _userRole == 'user'
+          ? StreamBuilder<DocumentSnapshot>(
+              // Listen to *this user's* chat document
+              stream: _firestore
+                  .collection('chats')
+                  .doc(_currentUser!.uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                int unreadCount = 0;
+                // Check if the doc exists and has our count field
+                if (snapshot.hasData && snapshot.data!.exists) {
+                  // Ensure data is not null before casting
+                  final data = snapshot.data!.data();
+                  if (data != null) {
+                    unreadCount =
+                        (data as Map<String, dynamic>)['unreadByUserCount'] ??
+                        0;
+                  }
+                }
+
+                // Wrap the FAB in the Badge widget
+                return Badge(
+                  // Show the count in the badge
+                  label: Text('$unreadCount'),
+                  // Only show the badge if the count is > 0
+                  isLabelVisible: unreadCount > 0,
+                  // The FAB is now the *child* of the Badge
+                  child: FloatingActionButton.extended(
+                    icon: const Icon(Icons.support_agent),
+                    label: const Text('Contact Admin'),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ChatScreen(chatRoomId: _currentUser!.uid),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            )
+          : null, // If admin, don't show the FAB
     );
   }
 }
