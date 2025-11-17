@@ -49,6 +49,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final String description = widget.productData['description'];
     final String imageUrl = widget.productData['imageUrl'];
     final double price = widget.productData['price'];
+    final double rating = widget.productData['rating'] ?? 0.0;
 
     // 1. ADD THIS LINE: Get the CartProvider
     // We set listen: false because we are not rebuilding, just calling a function
@@ -109,8 +110,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
-                      color: Colors.deepPurple,
+                      color: Colors.blue,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Rating Stars
+                  Row(
+                    children: [
+                      ...List.generate(5, (index) {
+                        return Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          size: 24,
+                          color: Colors.amber,
+                        );
+                      }),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${rating.toStringAsFixed(1)}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 

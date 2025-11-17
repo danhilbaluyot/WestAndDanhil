@@ -2,50 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:ecommerce_app/screen/auth_wrapper.dart';
-
-// Import the native splash package so we can preserve/remove the native splash
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
 import 'package:provider/provider.dart'; // 2. ADD THIS
 import 'package:firebase_auth/firebase_auth.dart'; // 3. ADD THIS
 import 'package:google_fonts/google_fonts.dart'; // 1. ADD THIS IMPORT
 
-// 2. --- ADD OUR NEW APP COLOR PALETTE ---
-const Color kRichBlack = Color(0xFF1D1F24); // A dark, rich black
-const Color kBrown = Color(0xFF8B5E3C); // Our main "coffee" brown
-const Color kLightBrown = Color(0xFFD2B48C); // A lighter tan/beige
-const Color kOffWhite = Color(0xFFF8F4F0); // A warm, off-white background
-// --- END OF COLOR PALETTE ---
-
 void main() async {
-  // 1. Preserve the splash screen
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. Initialize Firebase
+  // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 3. Set web persistence (Unchanged)
+  // Set web persistence
   await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
 
-  // 4. --- THIS IS THE FIX ---
-  // We manually create the CartProvider instance *before* runApp
+  // Create the CartProvider instance
   final cartProvider = CartProvider();
 
-  // 5. We call our new initialize method *before* runApp
+  // Initialize auth listener
   cartProvider.initializeAuthListener();
 
-  // 6. This is the NEW code for runApp
   runApp(
-    // 7. We use ChangeNotifierProvider.value
-    ChangeNotifierProvider.value(
-      value: cartProvider, // 8. We provide the instance we already created
-      child: const MyApp(),
-    ),
+    ChangeNotifierProvider.value(value: cartProvider, child: const MyApp()),
   );
-
-  // 9. Remove the splash screen after app is ready
-  FlutterNativeSplash.remove();
 }
 
 class MyApp extends StatelessWidget {
@@ -61,17 +40,17 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         // 2. Set the main color scheme
         colorScheme: ColorScheme.fromSeed(
-          seedColor: kBrown, // Our new primary color
+          seedColor: Colors.blue, // Changed to blue color palette
           brightness: Brightness.light,
-          primary: kBrown,
+          primary: Colors.blue,
           onPrimary: Colors.white,
-          secondary: kLightBrown,
-          background: kOffWhite, // Our new app background
+          secondary: Colors.blueAccent,
+          background: Colors.white, // Clean white background
         ),
         useMaterial3: true,
 
         // 3. Set the background color for all screens
-        scaffoldBackgroundColor: kOffWhite,
+        scaffoldBackgroundColor: Colors.white,
 
         // 4. --- (FIX) APPLY THE GOOGLE FONT ---
         // This applies "Lato" to all text in the app
@@ -80,7 +59,7 @@ class MyApp extends StatelessWidget {
         // 5. --- (FIX) GLOBAL BUTTON STYLE ---
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: kBrown, // Use our new brown
+            backgroundColor: Colors.blue, // Use blue color
             foregroundColor: Colors.white, // Text color
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
             shape: RoundedRectangleBorder(
@@ -95,10 +74,10 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey[400]!),
           ),
-          labelStyle: TextStyle(color: kBrown.withOpacity(0.8)),
+          labelStyle: TextStyle(color: Colors.blue.withOpacity(0.8)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: kBrown, width: 2.0),
+            borderSide: const BorderSide(color: Colors.blue, width: 2.0),
           ),
         ),
 
@@ -116,7 +95,7 @@ class MyApp extends StatelessWidget {
         // 9. --- (NEW) GLOBAL APPBAR STYLE ---
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white, // Clean white AppBar
-          foregroundColor: kRichBlack, // Black icons and text
+          foregroundColor: Colors.black, // Black icons and text
           elevation: 0, // No shadow, modern look
           centerTitle: true,
         ),

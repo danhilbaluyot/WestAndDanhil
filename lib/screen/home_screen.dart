@@ -218,12 +218,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 price = 0.0;
               }
 
+              // Safely parse rating to double
+              final rawRating = productData['rating'];
+              double rating;
+              if (rawRating is num) {
+                rating = rawRating.toDouble();
+              } else if (rawRating is String) {
+                rating = double.tryParse(rawRating) ?? 0.0;
+              } else {
+                rating = 0.0;
+              }
+
               // 3. Find your old ProductCard
               return ProductCard(
                 productName: name,
                 price: price,
                 imageUrl: imageUrl,
-
+                rating: rating, // ADD THIS LINE
                 // 4. --- THIS IS THE NEW PART ---
                 //    Add the onTap property
                 onTap: () {

@@ -94,14 +94,10 @@
       document.body.style.background = "transparent";
     }
   </script>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  
 </head>
 <body>
-  <picture id="splash">
-      <source srcset="splash/img/light-1x.png 1x, splash/img/light-2x.png 2x, splash/img/light-3x.png 3x, splash/img/light-4x.png 4x" media="(prefers-color-scheme: light)">
-      <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
-      <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
-  </picture>
+  
   <!-- Inline web splash: shows immediately while Flutter loads -->
   <style>
     /* Simple full-screen splash that will be covered by Flutter once ready */
@@ -122,7 +118,7 @@
   <div id="web-splash" role="img" aria-label="App loading splash">
     <!-- Inline SVG logo as a fallback until you add a real image -->
     <div style="text-align:center">
-        <img src="assets/images/splash_logo.png.png" alt="App logo" style="width:220px;height:220px;object-fit:contain;" />
+        <img src="assets/images/splash_logo.png.png" alt="App logo" style="width:220px;height:220px;object-fit:contain;">
     </div>
   </div>
 

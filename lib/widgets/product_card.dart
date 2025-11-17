@@ -6,6 +6,7 @@ class ProductCard extends StatelessWidget {
   final String productName;
   final double price;
   final String imageUrl;
+  final double rating; // ADD THIS LINE
   final VoidCallback onTap; // 1. ADD THIS LINE
 
   // 3. The constructor takes this data
@@ -14,6 +15,7 @@ class ProductCard extends StatelessWidget {
     required this.productName,
     required this.price,
     required this.imageUrl,
+    required this.rating, // ADD THIS TO THE CONSTRUCTOR
     required this.onTap, // 2. ADD THIS TO THE CONSTRUCTOR
   });
 
@@ -70,6 +72,17 @@ class ProductCard extends StatelessWidget {
                       ),
                       maxLines: 2, // Allow two lines for the name
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Rating Stars
+                    Row(
+                      children: List.generate(5, (index) {
+                        return Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          size: 16,
+                          color: Colors.amber,
+                        );
+                      }),
                     ),
                     const Spacer(), // 5. Pushes the price to the bottom
                     // Price

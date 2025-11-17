@@ -1,14 +1,5 @@
-# TODO List for Notification Fixes and Features
-
-## 1. Fix Notification Creation
-- [x] Modify `lib/screens/payment_screen.dart` to add code that creates a notification document in Firestore after successfully placing an order.
-
-## 2. Add Mark All as Read Feature
-- [x] Modify `lib/screens/notifications_screen.dart` to add a "Mark All as Read" button in the AppBar.
-
-## 3. Add Swipe to Delete Feature
-- [x] Modify `lib/screens/notifications_screen.dart` to make the ListTile dismissible (swipe to delete) to remove notifications.
-
-## 4. Testing
-- [x] Test by placing an order to verify notification creation and display.
-- [x] Test marking all as read and deleting notifications.
+- [x] Update lib/widgets/product_card.dart: Add rating parameter and display star ratings below product name
+- [x] Update lib/screens/product_detail_screen.dart: Add rating display prominently and change color palette to blue
+- [x] Update lib/screen/home_screen.dart: Extract rating from productData and pass to ProductCard and ProductDetailScreen
+- [x] Update lib/main.dart: Change color palette to blue across the app
+- [x] Test the app to ensure ratings display correctly and color palette is consistent
