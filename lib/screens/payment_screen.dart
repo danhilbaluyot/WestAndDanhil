@@ -2,6 +2,8 @@ import 'package:ecommerce_app/providers/cart_provider.dart';
 import 'package:ecommerce_app/screens/order_success_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // 1. An enum to represent our different payment methods
 //    This is cleaner than using strings like "gcash"
@@ -46,7 +48,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
       await cartProvider.placeOrder();
       await cartProvider.clearCart();
 
-      // 5. If successful, navigate to success screen
+      // 5. Create a notification for the user about the successful order
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'userId': user.uid,
+          'title': 'Order Placed Successfully!',
+          'body':
+              'Your order has been placed and is being processed. Total: ₱${widget.totalAmount.toStringAsFixed(2)}',
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+      }
+
+      // 6. If successful, navigate to success screen
       //    We use pushAndRemoveUntil to clear the cart/payment screens
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(

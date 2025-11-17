@@ -279,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) =>
-                              ChatScreen(chatRoomId: _currentUser!.uid),
+                              ChatScreen(chatRoomId: _currentUser.uid),
                         ),
                       );
                     },

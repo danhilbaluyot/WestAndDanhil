@@ -239,7 +239,7 @@ class CartProvider with ChangeNotifier {
     } catch (e) {
       print('Error placing order: $e');
       // 25. Re-throw the error so the UI can catch it
-      throw e;
+      rethrow;
     }
   }
 
