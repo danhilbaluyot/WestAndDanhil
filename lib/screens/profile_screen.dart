@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:ecommerce_app/screen/auth_wrapper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -78,18 +79,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // 6. This is the "Logout" logic - FIXED VERSION
   Future<void> _signOut() async {
-    // 1. Get the Navigator *before* the async call
-    //    (This avoids a "don't use BuildContext" warning)
-    final navigator = Navigator.of(context);
-
-    // 2. This is your existing code
+    // 1. Sign out the user
     await _auth.signOut();
 
-    // 3. --- THIS IS THE FIX ---
-    //    After signing out, pop all screens until we are
-    //    back at the very first screen (which is our AuthWrapper).
-    //    The AuthWrapper will then correctly show the LoginScreen.
-    navigator.popUntil((route) => route.isFirst);
+    // 2. --- THIS IS THE FIX ---
+    //    Clear the entire navigation stack and push AuthWrapper,
+    //    which will then show the LoginScreen since no user is logged in.
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const AuthWrapper()),
+      (route) => false,
+    );
   }
 
   @override

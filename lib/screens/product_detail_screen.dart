@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ecommerce_app/providers/cart_provider.dart'; // 1. ADD THIS
 import 'package:provider/provider.dart'; // 2. ADD THIS
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // 1. Change StatelessWidget to StatefulWidget
 class ProductDetailScreen extends StatefulWidget {
@@ -39,6 +41,93 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       setState(() {
         _quantity--;
       });
+    }
+  }
+
+  // ADD STATE FOR COMMENTS
+  final TextEditingController _commentController = TextEditingController();
+  String _userRole = 'user'; // Default to user
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    final User? currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        setState(() {
+          final data = doc.data()!;
+          if (data.containsKey('role') && data['role'] is String) {
+            _userRole = data['role'] as String;
+          }
+        });
+      }
+    } catch (e) {
+      print("Error fetching user role: $e");
+    }
+  }
+
+  Future<void> _addComment() async {
+    final User? currentUser = _auth.currentUser;
+    if (currentUser == null || _commentController.text.trim().isEmpty) return;
+
+    try {
+      // Fetch user role
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
+      final userRole = userDoc.exists && userDoc.data() != null
+          ? userDoc.data()!['role'] ?? 'user'
+          : 'user';
+
+      await _firestore
+          .collection('products')
+          .doc(widget.productId)
+          .collection('comments')
+          .add({
+            'text': _commentController.text.trim(),
+            'userId': currentUser.uid,
+            'userEmail': currentUser.email ?? 'Anonymous',
+            'userRole': userRole,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+      _commentController.clear();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Comment added!')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add comment: $e')));
+    }
+  }
+
+  Future<void> _deleteComment(String commentId) async {
+    try {
+      await _firestore
+          .collection('products')
+          .doc(widget.productId)
+          .collection('comments')
+          .doc(commentId)
+          .delete();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Comment deleted!')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
     }
   }
 
@@ -127,7 +216,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       }),
                       const SizedBox(width: 8),
                       Text(
-                        '${rating.toStringAsFixed(1)}',
+                        rating.toStringAsFixed(1),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -210,6 +299,124 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       textStyle: const TextStyle(fontSize: 18),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // COMMENTS SECTION
+                  const Divider(thickness: 1),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Comments',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ADD COMMENT FORM (only if logged in)
+                  if (_auth.currentUser != null) ...[
+                    TextField(
+                      controller: _commentController,
+                      decoration: const InputDecoration(
+                        labelText: 'Add a comment...',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _addComment,
+                      child: const Text('Post Comment'),
+                    ),
+                    const SizedBox(height: 16),
+                  ] else ...[
+                    const Text('Please log in to add comments.'),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // DISPLAY COMMENTS
+                  StreamBuilder<QuerySnapshot>(
+                    stream: _firestore
+                        .collection('products')
+                        .doc(widget.productId)
+                        .collection('comments')
+                        .orderBy('timestamp', descending: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return const Text('Error loading comments.');
+                      }
+                      final comments = snapshot.data!.docs;
+                      if (comments.isEmpty) {
+                        return const Text(
+                          'No comments yet. Be the first to comment!',
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: comments.length,
+                        itemBuilder: (context, index) {
+                          final commentDoc = comments[index];
+                          final commentData =
+                              commentDoc.data() as Map<String, dynamic>;
+                          final commentText = commentData['text'] ?? '';
+                          final userEmail =
+                              commentData['userEmail'] ?? 'Anonymous';
+                          final userRole = commentData['userRole'] ?? 'user';
+                          final timestamp =
+                              commentData['timestamp'] as Timestamp?;
+                          final formattedTime = timestamp != null
+                              ? '${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year} ${timestamp.toDate().hour}:${timestamp.toDate().minute.toString().padLeft(2, '0')}'
+                              : 'Unknown time';
+
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '$userEmail ($userRole)',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      if (_userRole == 'admin')
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () =>
+                                              _deleteComment(commentDoc.id),
+                                        ),
+                                    ],
+                                  ),
+                                  Text(commentText),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    formattedTime,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

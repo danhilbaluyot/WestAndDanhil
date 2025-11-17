@@ -3,3 +3,9 @@
 - [x] Update lib/screen/home_screen.dart: Extract rating from productData and pass to ProductCard and ProductDetailScreen
 - [x] Update lib/main.dart: Change color palette to blue across the app
 - [x] Test the app to ensure ratings display correctly and color palette is consistent
+- [x] Add commenting feature to products: Users can add comments, visible to all, admins can delete
+  - [x] Update lib/screens/product_detail_screen.dart: Add comment display, input form, and delete functionality for admins
+  - [x] Implement Firestore subcollection 'comments' under each product for storing comments
+  - [x] Ensure only logged-in users can comment, and fetch user role for admin permissions
+  - [x] Display user role next to commenter email (e.g., "user@example.com (user)")
+  - [ ] Test commenting and admin delete features
