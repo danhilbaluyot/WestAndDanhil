@@ -137,8 +137,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final String name = widget.productData['name'];
     final String description = widget.productData['description'];
     final String imageUrl = widget.productData['imageUrl'];
-    final double price = widget.productData['price'];
-    final double rating = widget.productData['rating'] ?? 0.0;
+
+    // Safely parse price to double
+    final rawPrice = widget.productData['price'];
+    double price;
+    if (rawPrice is num) {
+      price = rawPrice.toDouble();
+    } else if (rawPrice is String) {
+      price = double.tryParse(rawPrice) ?? 0.0;
+    } else {
+      price = 0.0;
+    }
+
+    // Safely parse rating to double
+    final rawRating = widget.productData['rating'];
+    double rating;
+    if (rawRating is num) {
+      rating = rawRating.toDouble();
+    } else if (rawRating is String) {
+      rating = double.tryParse(rawRating) ?? 0.0;
+    } else {
+      rating = 0.0;
+    }
 
     // 1. ADD THIS LINE: Get the CartProvider
     // We set listen: false because we are not rebuilding, just calling a function

@@ -13,9 +13,6 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Set web persistence
-  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-
   // Create the CartProvider instance
   final cartProvider = CartProvider();
 
